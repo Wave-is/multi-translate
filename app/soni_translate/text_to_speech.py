@@ -165,8 +165,9 @@ def segments_egde_tts(filtered_edge_segments, TRANSLATE_AUDIO_TO, is_gui):
 
         logger.info(f"{text} >> {filename}")
         try:
-            command = f'/root/.pyenv/versions/miniconda3-latest/envs/sonitranslate/bin/python /styletts2-ukrainian/main.py --text "{text}" --voice "Анастасія Павленко" --output "{temp_file}" --speed 1.0'
+            command = f'/root/.pyenv/versions/miniconda3-latest/envs/styletts/bin/python ../styletts2-ukrainian/main.py --text "{text}" --voice "Наталія Калюжна" --output "{temp_file}" --speed 1.0'
             run_command(command)
+            verify_saved_file_and_size(temp_file)
 
             data, sample_rate = sf.read(temp_file)
             data = pad_array(data, sample_rate)
@@ -976,7 +977,7 @@ def audio_segmentation_to_voice(
     model_id_coqui="tts_models/multilingual/multi-dataset/xtts_v2",
     delete_previous_automatic=True,
 ):
-
+    print(result_diarize)
     remove_directory_contents("audio")
 
     # Mapping speakers to voice variables
@@ -1564,41 +1565,3 @@ if __name__ == "__main__":
         tts_voice04="en-NZ-MitchellNeural-Male",
         tts_voice05="en-GB-MaisieNeural-Female",
     )
-
-# ======================== Новая функция синтеза украинской речи ========================
-from gradio_client import Client
-import shutil
-import logging
-
-logger = logging.getLogger(__name__)
-
-def synthesize_ukrainian(text: str, voice: str = "Анастасія Павленко", speed: float = 1.0, output_filename: str = "audio/ukrainian_output.wav") -> str:
-    """
-    Функция для синтеза украинской речи через API StyleTTS2 Ukrainian.
-    
-    Параметры:
-      text            - текст для озвучивания,
-      voice           - имя выбранного голоса (один из списка STYLETTS2_UK_VOICES_LIST),
-      speed           - скорость речи (по умолчанию 1.0),
-      output_filename - путь для сохранения итогового аудиофайла.
-    
-    Возвращает:
-      Путь к сохранённому аудиофайлу.
-    """
-    try:
-        client = Client("patriotyk/styletts2-ukrainian")
-        # Используем endpoint /synthesize_multi (при необходимости можно изменить на /synthesize_single)
-        result = client.predict(
-            text=text,
-            voice_audio=voice,
-            speed=speed,
-            api_name="/synthesize_multi"
-        )
-        # Копируем полученный временный файл в output_filename (убедитесь, что папка "audio" существует)
-        shutil.copy(result, output_filename)
-        logger.info(f"Украинский аудиофайл сохранён как: {output_filename}")
-        return output_filename
-    except Exception as e:
-        logger.error(f"Ошибка при синтезе украинской речи: {str(e)}")
-        raise
-# =====================================================================================
