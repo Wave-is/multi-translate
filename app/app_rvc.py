@@ -9,6 +9,12 @@ import torch
 import os
 import shutil
 import subprocess
+import psutil
+try:
+    import GPUtil
+except ImportError:
+    GPUtil = None
+    
 from soni_translate.utils import remove_directory_contents  # Убедитесь, что эта функция импортирована
 from soni_translate.audio_segments import create_translated_audio
 from soni_translate.text_to_speech import (
@@ -116,7 +122,6 @@ directories = [
     if not os.path.exists(directory)
 ]
 
-
 class TTS_Info:
     def __init__(self, piper_enabled, xtts_enabled):
         self.list_edge = edge_tts_voices_list()
@@ -142,7 +147,6 @@ class TTS_Info:
         )
         return list_tts
 
-
 def prog_disp(msg, percent, is_gui, progress=None):
     logger.info(msg)
     if is_gui:
@@ -153,7 +157,6 @@ def warn_disp(wrn_lang, is_gui):
     logger.warning(wrn_lang)
     if is_gui:
         gr.Warning(wrn_lang)
-
 
 class SoniTrCache:
     def __init__(self):
@@ -270,6 +273,50 @@ def check_openai_api_key():
             "translation process in Advanced settings."
         )
 
+def get_system_metrics():
+    # Получаем загрузку CPU и памяти
+    cpu_usage = psutil.cpu_percent(interval=1)
+    mem = psutil.virtual_memory()
+    mem_usage = mem.percent
+
+    # Получаем данные о GPU (если установлен GPUtil)
+    if GPUtil is not None:
+        gpus = GPUtil.getGPUs()
+        if gpus:
+            gpu_load = round(gpus[0].load * 100, 1)
+            gpu_mem_usage = round(gpus[0].memoryUtil * 100, 1)
+        else:
+            gpu_load = "N/A"
+            gpu_mem_usage = "N/A"
+    else:
+        gpu_load = "N/A"
+        gpu_mem_usage = "N/A"
+
+    # Получаем список процессов с загрузкой CPU (топ-5)
+    processes = []
+    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+        try:
+            processes.append(proc.info)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    processes = sorted(processes, key=lambda p: p['cpu_percent'], reverse=True)[:5]
+
+    processes_html = ""
+    for proc in processes:
+        processes_html += f"<li>{proc['name']} (PID: {proc['pid']}) – {proc['cpu_percent']}%</li>"
+
+    html = f"""
+    <h3>Системные метрики</h3>
+    <p><b>Загрузка процессора:</b> {cpu_usage}%</p>
+    <p><b>Загрузка оперативной памяти:</b> {mem_usage}%</p>
+    <p><b>Загрузка GPU ядра:</b> {gpu_load}%</p>
+    <p><b>Загрузка GPU памяти:</b> {gpu_mem_usage}%</p>
+    <h4>Топ процессов по загрузке CPU:</h4>
+    <ul>
+        {processes_html}
+    </ul>
+    """
+    return html
 
 class SoniTranslate(SoniTrCache):
     def __init__(self, cpu_mode=False):
@@ -2598,6 +2645,25 @@ def create_gui(theme, logs_in_gui=False):
                 outputs=[download_link, log_output],  # Теперь возвращаем два значения
             )
 
+        with gr.Tab("Status"):
+            system_metrics_html = gr.HTML(get_system_metrics())
+            refresh_btn = gr.Button("Renew")
+            refresh_btn.click(fn=get_system_metrics, outputs=system_metrics_html)
+            
+            # Добавляем поле для отображения последнего архива
+            last_archive_link = gr.File(label="Last Archive", visible=True, interactive=False)
+            
+            # Обновляем ссылку на архив при запуске
+            def update_last_archive_link():
+                archive_path = "../FINAL-ZIP/final.zip"
+                if os.path.exists(archive_path):
+                    return gr.update(value=archive_path, visible=True)
+                else:
+                    return gr.update(value=None, visible=False)
+            
+            app.load(update_last_archive_link, None, last_archive_link)
+            
+        
         with gr.Tab(lg_conf["tab_help"]):
             gr.Markdown(lg_conf["tutorial"])
             gr.Markdown(news)
