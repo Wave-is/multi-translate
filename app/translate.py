@@ -27,10 +27,10 @@ def update_status(message):
     logging.info(message)  # Логируем сообщение для отладки
     
 # Данные для FTP
-FTP_HOST = "195.211.60.98"
+FTP_HOST = "IP"
 FTP_PORT = 1121
 FTP_USER = "dub-ftp"
-FTP_PASS = "8VsB5rvM36"
+FTP_PASS = "PASS"
 REMOTE_DIR = "/DUBBING"  
 
 def upload_to_ftp(local_file, remote_name):
