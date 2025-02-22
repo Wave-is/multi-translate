@@ -27,10 +27,10 @@ def update_status(message):
     logging.info(message)  # Логируем сообщение для отладки
     
 # Данные для FTP
-FTP_HOST = "YOUR IP"
+FTP_HOST = "195.211.60.98"
 FTP_PORT = 1121
 FTP_USER = "dub-ftp"
-FTP_PASS = "YOUR PASS"
+FTP_PASS = "8VsB5rvM36"
 REMOTE_DIR = "/DUBBING"  
 
 def upload_to_ftp(local_file, remote_name):
@@ -204,6 +204,7 @@ def main():
         "Bengali (bn)": "bn-IN-TanishaaNeural-Female",
         "Korean (ko)": "ko-KR-SunHiNeural-Female",
         "Japanese (ja)": "ja-JP-NanamiNeural-Female",
+	"Ukrainian (uk)": "uk-UA-PolinaNeural-Female",
     }
 
     # Переменная для хранения всех выходных файлов
