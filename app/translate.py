@@ -126,9 +126,9 @@ def main():
         "tts_voice01": "de-DE-KatjaNeural-Female",  # Голос для немецкого
         "video_output_name": "",
         "mix_method_audio": "Adjusting volumes and mixing audio",
-        "max_accelerate_audio": 1.9,
+        "max_accelerate_audio": 1.2,
         "acceleration_rate_regulation": True,
-        "volume_original_audio": 0,
+        "volume_original_audio": 1,
         "volume_translated_audio": 2.5,
         "output_format_subtitle": "srt",
         "get_translated_text": False,
